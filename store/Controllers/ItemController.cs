@@ -30,7 +30,7 @@ public class ItemController : ControllerBase
         {
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
-            if (item.Naziv.IsNullOrEmpty() || item.Brend.IsNullOrEmpty()) return BadRequest("Unesite Naziv i Brand");
+            if (item.Naziv == "" || item.Brend == "") return BadRequest("Unesite Naziv i Brand");
             var testQuety = @"
             MATCH (n:Item {id: $id})
             RETURN n";

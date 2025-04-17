@@ -269,3 +269,5 @@ F:/BazePodataka/NapredneBazePodataka/Projekat/store/obj/Debug/net8.0/ref/store.d
 /home/luka/Desktop/elfak/storeNapredneBaze/store/bin/Debug/net8.0/Isopoh.Cryptography.Blake2b.dll
 /home/luka/Desktop/elfak/storeNapredneBaze/store/bin/Debug/net8.0/Isopoh.Cryptography.SecureArray.dll
 /home/luka/Desktop/elfak/storeNapredneBaze/store/obj/Debug/net8.0/store.sourcelink.json
+/home/luka/Desktop/elfak/storeNapredneBaze/store/bin/Debug/net8.0/Microsoft.Bcl.Memory.dll
+/home/luka/Desktop/elfak/storeNapredneBaze/store/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll

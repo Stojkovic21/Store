@@ -1,6 +1,11 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Text;
 using Isopoh.Cryptography.Argon2;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Neo4j.Driver;
 
 
@@ -36,6 +41,7 @@ public class CustomerController : ControllerBase
                 id: $id, 
                 email: $email,
                 password: $password,
+                role: $role,
                 ime: $ime, 
                 prezime: $prezime, 
                 brTel: $brTel
@@ -47,6 +53,7 @@ public class CustomerController : ControllerBase
                 {"email",kupacModel.Email},
                 {"ime",kupacModel.Ime},
                 {"prezime",kupacModel.Prezime},
+                {"role",kupacModel.Role},
                 {"brTel",kupacModel.BrTel}
             };
             var result = await session.ExecuteReadAsync(async tx =>
@@ -92,7 +99,8 @@ public class CustomerController : ControllerBase
                 {"email",loginModel.Email},
                 {"ime",""},
                 {"prezime",""},
-                {"brTel",""}
+                {"brTel",""},
+                {"role",""}
             };
             var result = await session.ExecuteReadAsync(async tx =>
             {
@@ -106,7 +114,12 @@ public class CustomerController : ControllerBase
 
             if (result != null && Argon2.Verify(result.Properties["password"]?.ToString(), loginModel.Password))
             {
-                return Ok(result.Properties);
+                return Ok(CreateJwtToken(new JwtModel
+                {
+                    Email = result.Properties["email"]?.ToString(),
+                    Id = result.Properties["id"]?.ToString(),
+                    Role = result.Properties["role"]?.ToString()
+                }));
             }
             return BadRequest(new
             {
@@ -117,6 +130,33 @@ public class CustomerController : ControllerBase
         {
             throw;
         }
+    }
+    private string CreateJwtToken(JwtModel user)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier,user.Id),
+            new Claim(ClaimTypes.Name,user.Email),
+            new Claim(ClaimTypes.Role,user.Role)   //Sve sto treba da bude u jwt tokenu se smesta u Claim
+        };
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
+
+        var tokenDescriptor = new JwtSecurityToken(
+            issuer: configuration.GetValue<string>("AppSettings:Issuer")!,
+            audience: configuration.GetValue<string>("AppSettings:Audience")!,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(24),
+            signingCredentials: creds
+        );
+        return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+    }
+    [Authorize(Roles = "Admin")]
+    [HttpGet]
+    [Route("Auth")]
+    public IActionResult AutenticateOnlyEndpoint()
+    {
+        return Ok("You are authenticated");
     }
     [HttpGet]
     [Route("Get/all")]
@@ -242,7 +282,7 @@ public class CustomerController : ControllerBase
         }
     }
     [HttpPut]
-    [Route("Put/{id}")]
+    [Route("Edit/{id}")]
     public async Task<ActionResult> EditCustomerAsync([FromBody] KupacModel updateCustomer, int id)
     {
         try
@@ -258,7 +298,8 @@ public class CustomerController : ControllerBase
                         {"ime",updateCustomer.Ime},
                         {"prezime",updateCustomer.Prezime},
                         {"brTel",updateCustomer.BrTel},
-                        {"email",updateCustomer.Email}
+                        {"email",updateCustomer.Email},
+                        {"role",updateCustomer.Role}
                     }
                 }
             };
