@@ -80,7 +80,7 @@ public class AuthCustomerController : ControllerBase
         }
     }
     [HttpPost]
-    [Route("login")]
+    [Route("Login")]
     public async Task<ActionResult> Login([FromBody] LoginModel loginModel)
     {
         try

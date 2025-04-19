@@ -1,3 +1,4 @@
+using Isopoh.Cryptography.Argon2;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Neo4j.Driver;
@@ -18,86 +19,61 @@ public class EditCustomerController : ControllerBase
         driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
     }
 
-
-    [Authorize(Roles = "Admin")]
-    [HttpGet]
-    [Route("Auth")]
-    public IActionResult AutenticateOnlyEndpoint()
-    {
-        return Ok("You are authenticated");
-    }
-
-
-    [Authorize(Roles = "Admin,User")]
-    [HttpDelete]
-    [Route("Delete/{id}")]
-    public async Task<ActionResult> DeleteCustomerAsync(int id)
-    {
-        try
-        {
-            await driver.VerifyConnectivityAsync();
-            await using var session = driver.AsyncSession();
-
-            var parameters = new Dictionary<string, object>
-            {
-                {"id",id}
-            };
-            var testQuety = @"
-            MATCH (n:Customer {id: $id})
-            RETURN n";
-            var deleteQuery = @"
-            MATCH (n:Customer {id: $id})
-            DELETE n";
-            var result = await session.ExecuteReadAsync(async tx =>
-             {
-                 var response = await tx.RunAsync(testQuety, parameters);
-                 if (await response.FetchAsync())
-                 {
-                     return response.Current["n"].As<INode>();
-                 }
-                 return null;
-             });
-            if (result != null)
-            {
-                await session.ExecuteWriteAsync(async tx =>
-                {
-                    await tx.RunAsync(deleteQuery, parameters);
-                    return Ok(new { message = "Nodes deleted successfully!" });
-                });
-                return BadRequest("false");
-            }
-            else return NotFound(new { message = "Not found" });
-        }
-        catch (Exception ex)
-        {
-            return NotFound(new { message = "False", error = ex });
-        }
-    }
     [Authorize(Roles = "Admin,User")]
     [HttpPut]
-    [Route("Edit/{id}")]
-    public async Task<ActionResult> EditCustomerAsync([FromBody] KupacModel updateCustomer, int id)
+    [Route("Edit")]
+    public async Task<ActionResult> EditCustomerAsync([FromBody] KupacModel updateCustomer)
     {
         try
         {
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
+            var findQuery = @"
+            MATCH (n:Customer {email: $email})
+            RETURN n;
+            ";
+            var findParameters = new Dictionary<string, object>
+            {
+                {"email",updateCustomer.Email}
+            };
+            var findResult = await session.ExecuteReadAsync(async tx =>
+            {
+                var response = await tx.RunAsync(findQuery, findParameters);
+                if (await response.FetchAsync())
+                {
+                    return response.Current["n"].As<INode>();
+                }
+                return null;
+            });
+            //Console.WriteLine(findResult.Properties);
+            updateCustomer.Ime = updateCustomer.Ime == "" ? findResult.Properties["ime"].ToString() : updateCustomer.Ime;
+            updateCustomer.Prezime = updateCustomer.Prezime == "" ? findResult.Properties["prezime"].ToString() : updateCustomer.Prezime;
+            updateCustomer.BrTel = updateCustomer.BrTel == "" ? findResult.Properties["brTel"].ToString() : updateCustomer.BrTel;
+            updateCustomer.Role = updateCustomer.Role == "" ? findResult.Properties["role"].ToString() : updateCustomer.Role;
+
+            if (!(findResult != null && Argon2.Verify(findResult.Properties["password"]?.ToString(), updateCustomer.Password)))
+            {
+                return BadRequest(new
+                {
+                    message = "Enter correct password"
+                });
+            }
+
             var parameters = new Dictionary<string, object>
             {
-                {"id", id},
+                {"email", updateCustomer.Email},
                 {
                     "propertis",new Dictionary<string,object>{
                         {"ime",updateCustomer.Ime},
                         {"prezime",updateCustomer.Prezime},
                         {"brTel",updateCustomer.BrTel},
-                        {"email",updateCustomer.Email},
                         {"role",updateCustomer.Role}
                     }
                 }
             };
             var query = @"
-            MATCH (n:Customer {id: $id})
+            MATCH (n:Customer {email: $email})
             SET n+=$propertis
             RETURN n";
 
