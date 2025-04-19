@@ -1,4 +1,4 @@
-interface itemModul
+interface itemDto
 {
     id: number
     naziv: string
@@ -8,4 +8,4 @@ interface itemModul
     dostupnaKolicina: number
 }
 
-export default itemModul
+export default itemDto

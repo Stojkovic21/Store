@@ -2,31 +2,20 @@ import { useForm } from "react-hook-form";
 import "../style/Register.css";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import customerModel from "../Models/CustomerModel";
+import customerDto from "../Models/CustomerDto";
 // Define the TypeScript interface for your model
-type FormFields = {
-  id: number;
-  email: string;
-  password: string;
-  ime: string;
-  prezime: string;
-  brTel: string;
-};
 
 function Registe() {
-  const [customers, setCustomers] = useState<customerModel[]>([]);
+  const [customers, setCustomers] = useState<customerDto[]>([]);
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const result = await axios.get(
-          "http://localhost:5057/Customer/Get/all"
-        );
+        const result = await axios.get("http://localhost:5057/GetCustomer/all");
         setCustomers(result.data.customer);
       } catch (error) {
         console.log("Doslo do pucanja get all");
       }
     };
-
     fetchUser();
   }, []);
 
@@ -34,17 +23,14 @@ function Registe() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormFields>();
+  } = useForm<customerDto>();
 
-  const onSubmit = async (data: FormFields) => {
-
-    data.id = 4;
-    const response = await axios.post(
-      "http://localhost:5057/Customer/Dodaj",
-      data
-    );
+  const onSubmit = async (data: customerDto) => {
+    data.id = customers.length;
+    data.role = "User";
+    await axios.post("http://localhost:5057/Customer/Dodaj", data);
     await new Promise((responce) => setTimeout(responce, 1000));
-    console.log("Form Data Submitted:", response.data);
+    //console.log("Form Data Submitted:", response.data);
   };
 
   return (
@@ -58,10 +44,10 @@ function Registe() {
             placeholder="Enter your Email"
             {...register("email", {
               required: true,
-              pattern: {
-                value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                message: "Invalid email address",
-              },
+              // pattern: {
+              //   value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+              //   message: "Invalid email address",
+              // },
             })}
             className="form-input"
           />
@@ -74,11 +60,11 @@ function Registe() {
             placeholder="Enter your password"
             {...register("password", {
               required: true,
-              pattern: {
-                value: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/,
-                message:
-                  "Password must be at least 8 characters long and include letters and number",
-              },
+              // pattern: {
+              //   value: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/,
+              //   message:
+              //     "Password must be at least 8 characters long and include letters and number",
+              // },
             })}
             className="form-input"
           />

@@ -1,7 +1,7 @@
-import itemModul from "../Models/ItemModel";
+import itemDto from "../Models/ItemDto";
 import "../style/Artikal.css";
 //import { ReactNode } from "react"
-function Artikal(item: itemModul) {
+function Artikal(item: itemDto) {
   return (
     <>
       <div className="card shadow-lg rounded-2xl kartica">

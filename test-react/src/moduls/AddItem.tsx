@@ -3,7 +3,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import "../style/AddItem.css"
 import axios from "axios";
 import { useEffect, useState } from "react";
-import itemModel from "../Models/ItemModel";
+import itemModel from "../Models/ItemDto";
 
 type FormFields = {
   id:number

@@ -18,7 +18,7 @@ public class GetCustomerController : ControllerBase
     }
 
     [HttpGet]
-    [Route("Get/all")]
+    [Route("all")]
     public async Task<ActionResult> GetAllCustomerAsync()
     {
         try
@@ -35,18 +35,19 @@ public class GetCustomerController : ControllerBase
             var result = await session.ExecuteReadAsync(async tx =>
             {
                 var response = await tx.RunAsync(query, parameters);
-                if (await response.FetchAsync())
+                var customers = new List<INode>();
+                while (await response.FetchAsync())
                 {
-                    return response.Current["n"].As<INode>();
+                    customers.Add(response.Current["n"].As<INode>());
                 }
-                return null;
+                return customers;
             });
             if (result != null)
             {
                 return Ok(new
                 {
                     message = "True",
-                    customer = result.Properties
+                    customer = result.Select(s => s.Properties)
                 });
             }
             else return NotFound(new { message = "Customer is not found" });
@@ -57,7 +58,7 @@ public class GetCustomerController : ControllerBase
         }
     }
     [HttpGet]
-    [Route("Get/{id}")]
+    [Route("{id}")]
     public async Task<ActionResult> GetCustomerAsync(int id)
     {
         try

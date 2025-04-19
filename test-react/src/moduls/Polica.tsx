@@ -1,4 +1,4 @@
-import itemModul from "../Models/ItemModel";
+import itemDto from "../Models/ItemDto";
 import Artikal from "./Artikal";
 import "../style/Polica.css";
 import axios from "axios";
@@ -27,7 +27,7 @@ const fetchData=async()=>{
           // }, []);
           
 function Polica() {            
-  const [items, setItems]= useState<itemModul[]>([]);
+  const [items, setItems]= useState<itemDto[]>([]);
   useEffect(() => {
     const fetchItems = async () => {
       try {
