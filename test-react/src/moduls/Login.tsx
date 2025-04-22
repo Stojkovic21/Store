@@ -1,4 +1,3 @@
-import React from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";

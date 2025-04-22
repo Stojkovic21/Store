@@ -1,25 +1,27 @@
 {
   "format": 1,
   "restore": {
-    "/home/luka/Desktop/elfak/storeNapredneBaze/store/store.csproj": {}
+    "F:\\BazePodataka\\NapredneBazePodataka\\Store\\store\\store.csproj": {}
   },
   "projects": {
-    "/home/luka/Desktop/elfak/storeNapredneBaze/store/store.csproj": {
+    "F:\\BazePodataka\\NapredneBazePodataka\\Store\\store\\store.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/luka/Desktop/elfak/storeNapredneBaze/store/store.csproj",
+        "projectUniqueName": "F:\\BazePodataka\\NapredneBazePodataka\\Store\\store\\store.csproj",
         "projectName": "store",
-        "projectPath": "/home/luka/Desktop/elfak/storeNapredneBaze/store/store.csproj",
-        "packagesPath": "/home/luka/.nuget/packages/",
-        "outputPath": "/home/luka/Desktop/elfak/storeNapredneBaze/store/obj/",
+        "projectPath": "F:\\BazePodataka\\NapredneBazePodataka\\Store\\store\\store.csproj",
+        "packagesPath": "C:\\Users\\bakib\\.nuget\\packages\\",
+        "outputPath": "F:\\BazePodataka\\NapredneBazePodataka\\Store\\store\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/luka/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\bakib\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -86,7 +88,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.115/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
