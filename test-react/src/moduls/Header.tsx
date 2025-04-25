@@ -1,20 +1,16 @@
+import { Link } from "react-router-dom";
 import "../style/Header.css";
-import { Link } from 'react-router-dom'
-function main() {
+
+export default function main() {
     
     return (<>
-       <header className="main-header">
+
+  <header className="main-header">
   <div className="logo">MySite</div>
   <nav className="nav-links">
-    
-    <a href="/Login">About</a>
-    <a href="/services">Services</a>
-    <a href="/contact">Contact</a>
+    <Link to="/login">Login</Link>
+    <Link to="/signup">Sign In</Link>
   </nav>
 </header>
-
-
     </>);
 }
-
-export default main;

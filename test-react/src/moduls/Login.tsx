@@ -1,6 +1,7 @@
 import { SubmitHandler, useForm } from "react-hook-form";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
+import Header from "./Header";
 type FormFields = {
   email: string;
   password: string;
@@ -31,7 +32,9 @@ function LoginPage() {
     console.log("Form Data Submitted:", response);
   };
 
-  return (
+  return (<>    
+    <Header/>
+    
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
       <div className="card p-4 shadow-sm" style={{ width: "22rem" }}>
         <h2 className="text-center mb-4">Login</h2>
@@ -78,7 +81,7 @@ function LoginPage() {
         </form>
       </div>
     </div>
-  );
+    </>);
 }
 
 export default LoginPage;

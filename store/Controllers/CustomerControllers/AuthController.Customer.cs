@@ -133,9 +133,9 @@ public class AuthCustomerController : ControllerBase
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier,user.Id),
-            new Claim(ClaimTypes.Name,user.Email),
-            new Claim(ClaimTypes.Role,user.Role)   //Sve sto treba da bude u jwt tokenu se smesta u Claim
+            new(ClaimTypes.NameIdentifier,user.Id),
+            new(ClaimTypes.Name,user.Email),
+            new(ClaimTypes.Role,user.Role)   //Sve sto treba da bude u jwt tokenu se smesta u Claim
         };
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);

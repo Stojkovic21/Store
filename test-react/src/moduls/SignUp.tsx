@@ -3,9 +3,10 @@ import "../style/Register.css";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import customerDto from "../Models/CustomerDto";
+import Header from "./Header";
 // Define the TypeScript interface for your model
 
-function Registe() {
+function SignUp() {
   const [customers, setCustomers] = useState<customerDto[]>([]);
   useEffect(() => {
     const fetchUser = async () => {
@@ -33,7 +34,8 @@ function Registe() {
     //console.log("Form Data Submitted:", response.data);
   };
 
-  return (
+  return (<>
+  <Header/>
     <div className="form-wrapper">
       <h2 className="form-title">User Registration</h2>
       <form onSubmit={handleSubmit(onSubmit)} className="form-container">
@@ -111,7 +113,7 @@ function Registe() {
         </button>
       </form>
     </div>
-  );
+  </>);
 }
 
-export default Registe;
+export default SignUp;
