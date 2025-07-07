@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Neo4j.Driver;
 
 [ApiController]
-[Route("[controller]")]
+[Route("customer")]
 public class EditCustomerController : ControllerBase
 {
     private readonly IDriver driver;
@@ -21,7 +21,7 @@ public class EditCustomerController : ControllerBase
 
     [Authorize(Roles = "Admin,User")]
     [HttpPut]
-    [Route("Edit")]
+    [Route("edit")]
     public async Task<ActionResult> EditCustomerAsync([FromBody] KupacModel updateCustomer)
     {
         try

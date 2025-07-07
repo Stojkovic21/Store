@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Neo4j.Driver;
 
 [ApiController]
-[Route("[controller]")]
+[Route("customer")]
 public class AuthCustomerController : ControllerBase
 {
     private readonly IDriver driver;
@@ -22,7 +22,7 @@ public class AuthCustomerController : ControllerBase
         this.driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
     }
 
-    [Route("SignUp")]
+    [Route("signup")]
     [HttpPost]
     public async Task<ActionResult> AddCustomerAsync([FromBody] KupacModel kupacModel)
     {
@@ -70,9 +70,15 @@ public class AuthCustomerController : ControllerBase
                     await tx.RunAsync(query, parameters);
                     return "Nodes added successfully!";
                 });
-                return Ok(res);
+                return Ok(CreateJwtToken(new JwtModel
+                {
+                    Email = kupacModel.Email,
+                    Id = kupacModel.Id.ToString(),
+                    Role = kupacModel.Role
+                }));
             }
             else return NotFound(new { message = "Node existing" });
+
         }
         catch (Exception ex)
         {
@@ -80,7 +86,7 @@ public class AuthCustomerController : ControllerBase
         }
     }
     [HttpPost]
-    [Route("Login")]
+    [Route("login")]
     public async Task<ActionResult> Login([FromBody] LoginModel loginModel)
     {
         try

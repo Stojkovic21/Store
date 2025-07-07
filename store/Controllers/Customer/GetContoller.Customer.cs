@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Neo4j.Driver;
 
 [ApiController]
-[Route("[controller]")]
+[Route("customer")]
 public class GetCustomerController : ControllerBase
 {
     private readonly IDriver driver;

@@ -1,35 +1,24 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Neo4j.Driver;
 
 [ApiController]
-[Route("[controller]")]
-public class DeleteCustomerController : ControllerBase
+[Route("category")]
+public class DeleteCategoryController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
-    public DeleteCustomerController(IConfiguration configuration)
+    public DeleteCategoryController(IConfiguration configuration)
     {
         this.configuration = configuration;
         var uri = this.configuration.GetValue<string>("Neo4j:Uri");
         var user = this.configuration.GetValue<string>("Neo4j:Username");
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
-        driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        this.driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
     }
-
-    [Authorize(Roles = "Admin")]
-    [HttpGet]
-    [Route("Auth")]
-    public IActionResult AutenticateOnlyEndpoint()
-    {
-        return Ok("You are authenticated");
-    }
-
-    [Authorize(Roles = "Admin,User")]
     [HttpDelete]
-    [Route("Delete/{id}")]
-    public async Task<ActionResult> DeleteCustomerAsync(int id)
+    [Route("delete/{id}")]
+    public async Task<ActionResult> DeleteCategoryAsync(int id)
     {
         try
         {
@@ -41,10 +30,10 @@ public class DeleteCustomerController : ControllerBase
                 {"id",id}
             };
             var testQuety = @"
-            MATCH (n:Customer {id: $id})
+            MATCH (n:Category {id: $id})
             RETURN n";
             var deleteQuery = @"
-            MATCH (n:Customer {id: $id})
+            MATCH (n:Category {id: $id})
             DELETE n";
             var result = await session.ExecuteReadAsync(async tx =>
              {
