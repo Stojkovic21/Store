@@ -28,11 +28,11 @@ public class AddCategoryController : ControllerBase
             MATCH (n:Category {id: $id})
             RETURN n";
             var query = @"
-            CREATE(n:Category {id:$id, naziv:$naziv})";
+            CREATE(n:Category {id:$id, name:$name})";
             var parameters = new Dictionary<string, object>
             {
                 {"id",categoryModel.Id},
-                {"naziv",categoryModel.Name}
+                {"name",categoryModel.Name}
             };
             var result = await session.ExecuteReadAsync(async tx =>
             {

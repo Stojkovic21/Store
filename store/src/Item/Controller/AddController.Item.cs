@@ -29,7 +29,7 @@ public class AddItemController : ControllerBase
             MATCH (n:Item {id: $id})
             RETURN n";
             var query = @"
-            CREATE (n:Item {id:$id, name: $name, price: $price, netoQuantity: $netoQuantity, availableQuantity: $availableQuantity, brend: $brend})";
+            CREATE (n:Item {id:$id, name: $name, price: $price, netoQuantity: $netoQuantity, availableQuantity: $availableQuantity})";
 
             var parameters = new Dictionary<string, object>
             {
@@ -38,7 +38,6 @@ public class AddItemController : ControllerBase
                 { "price", item.Price },
                 { "netoQuantity", item.NetoQuantity },
                 { "availableQuantity", item.AvailableQuantity },
-                { "brend", item.Brend }
             };
             var result = await session.ExecuteReadAsync(async tx =>
             {

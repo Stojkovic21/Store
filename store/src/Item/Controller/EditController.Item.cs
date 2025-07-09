@@ -39,8 +39,7 @@ public class EditItemController : ControllerBase
                         { "name", updatedItem.Name },
                         { "price", updatedItem.Price },
                         { "netoQuantity",updatedItem.NetoQuantity},
-                        { "availableQuantity", updatedItem.AvailableQuantity },
-                        { "brend", updatedItem.Brend }
+                        { "availableQuantity", updatedItem.AvailableQuantity }
                     }
                 }
             };
