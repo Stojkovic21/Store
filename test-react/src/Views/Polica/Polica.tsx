@@ -1,18 +1,19 @@
-import itemDto from "../Models/ItemDto";
-import Artikal from "./Artikal";
-import "../style/Polica.css";
+import itemDto from "../../DTOs/ItemDto";
+import Artikal from "../Artikal/Artikal";
+import "./Polica.css";
 import axios from "axios";
 import { useEffect, useState } from "react";
+//nisam siguran sto sam ga napravio ali neka ga mozda skuzim
+// let id:string="0";
+// const fetchData=async()=>{
+//   try {
+//     const response = await axios.get(`http://localhost:5057/item/get/id:${id}`);
+//     console.log(response.data.item);
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }
 
-let id:string="s";
-const fetchData=async()=>{
-  try {
-    const response = await axios.get(`http://localhost:5057/Item/Get/naziv:${id}`);
-    console.log(response.data.item);
-  } catch (error) {
-    console.log(error);
-  }
-}
 // useEffect(() => {
   //   const fetchItems = async () => {
     //     try {
@@ -45,12 +46,12 @@ function Polica() {
   return (
     <>
       <div className="polica">
-        {items.map((item) => (
+        {items ?items.map((item) => (
           <Artikal key={item.id}{...item} />
-        ))}
+        )):null}
       </div>
 
-      <button onClick={fetchData}> dugme </button>
+      {/*<button onClick={fetchData}> dugme </button>*/}
     </>
   );
 }
