@@ -118,12 +118,15 @@ public class AuthCustomerController : ControllerBase
 
             if (result != null && Argon2.Verify(result.Properties["password"]?.ToString(), loginModel.Password))
             {
-                return Ok(CreateJWT(new JwtModel
+                return Ok(new
                 {
-                    Email = result.Properties["email"]?.ToString(),
-                    Id = result.Properties["id"]?.ToString(),
-                    Role = result.Properties["role"]?.ToString()
-                }));
+                    accessToken = CreateJWT(new JwtModel
+                    {
+                        Email = result.Properties["email"]?.ToString(),
+                        Id = result.Properties["id"]?.ToString(),
+                        Role = result.Properties["role"]?.ToString()
+                    })
+                });
             }
             return BadRequest(new
             {
