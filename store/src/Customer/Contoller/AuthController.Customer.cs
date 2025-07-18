@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Isopoh.Cryptography.Argon2;
 using Microsoft.AspNetCore.Mvc;
@@ -24,66 +25,95 @@ public class AuthCustomerController : ControllerBase
 
     [Route("signup")]
     [HttpPost]
-    public async Task<ActionResult> AddCustomerAsync([FromBody] KupacModel kupacModel)
+    public async Task<ActionResult> SignUp([FromBody] KupacModel kupacModel)
     {
         var passwordHash = Argon2.Hash(kupacModel.Password);
+        kupacModel.RefreshToken = GenerateRefreshToken();
+        kupacModel.RefreshTokenTimeExpire = DateTime.UtcNow.AddDays(7);
         try
         {
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
-            var testQuety = @"
-            MATCH (n:Customer {email: $email})
-            RETURN n";
-            var query = @"
-            CREATE (n:Customer {
-                id: $id, 
-                email: $email,
-                password: $password,
-                role: $role,
-                ime: $ime, 
-                prezime: $prezime, 
-                brTel: $brTel
-            })";
+
+            var testQuery = @"
+                MATCH (n:Customer {email: $email})
+                RETURN n";
+
+            var createQuery = @"
+                CREATE (n:Customer {
+                    id: $id, 
+                    email: $email,
+                    password: $password,
+                    role: $role,
+                    ime: $ime, 
+                    prezime: $prezime, 
+                    brTel: $brTel,
+                    refreshToken: $refreshToken,
+                    RTTimeExpire: $RTTimeExpire
+                })
+                RETURN n";
+
             var parameters = new Dictionary<string, object>
             {
-                {"id",kupacModel.Id},
-                {"password",passwordHash},
-                {"email",kupacModel.Email},
-                {"ime",kupacModel.Ime},
-                {"prezime",kupacModel.Prezime},
-                {"role",kupacModel.Role},
-                {"brTel",kupacModel.BrTel}
+                {"id", kupacModel.Id},
+                {"password", passwordHash},
+                {"email", kupacModel.Email},
+                {"ime", kupacModel.Ime},
+                {"prezime", kupacModel.Prezime},
+                {"role", kupacModel.Role},
+                {"brTel", kupacModel.BrTel},
+                {"refreshToken", ""},
+                {"RTTimeExpire", kupacModel.RefreshTokenTimeExpire}
             };
-            var result = await session.ExecuteReadAsync(async tx =>
+
+            var existingCustomer = await session.ExecuteReadAsync(async tx =>
             {
-                var response = await tx.RunAsync(testQuety, parameters);
+                var response = await tx.RunAsync(testQuery, parameters);
                 if (await response.FetchAsync())
                 {
                     return response.Current["n"].As<INode>();
                 }
                 return null;
             });
-            if (result == null)
-            {
-                var res = await session.ExecuteWriteAsync(async tx =>
-                {
-                    await tx.RunAsync(query, parameters);
-                    return "Nodes added successfully!";
-                });
-                return Ok(CreateJWT(new JwtModel
-                {
-                    Email = kupacModel.Email,
-                    Id = kupacModel.Id.ToString(),
-                    Role = kupacModel.Role
-                }));
-            }
-            else return NotFound(new { message = "Node existing" });
 
+            if (existingCustomer != null)
+            {
+                return Conflict(new { message = "Customer already exists" });
+            }
+
+            var newCustomer = await session.ExecuteWriteAsync(async tx =>
+            {
+                var response = await tx.RunAsync(createQuery, parameters);
+                if (await response.FetchAsync())
+                {
+                    return response.Current["n"].As<INode>();
+                }
+                return null;
+            });
+
+            if (newCustomer == null)
+            {
+                return StatusCode(500, new { message = "Failed to create customer" });
+            }
+
+            return Ok(
+                new ResponseTokenModel
+                {
+                    AccessToken = CreateJWT(new JwtModel
+                    {
+                        Email = newCustomer.Properties["email"]?.ToString(),
+                        Id = newCustomer.Properties["id"]?.ToString(),
+                        Role = newCustomer.Properties["role"]?.ToString()
+                    }),
+                    RefreshToken = await GenerateAndSaveRefreshTokenAsync(new LoginModel(kupacModel.Email, kupacModel.Password))
+                }
+            );
         }
         catch (Exception ex)
         {
-            return BadRequest(ex);
+            return BadRequest(new { error = ex.Message });
         }
+
     }
     [HttpPost]
     [Route("login")]
@@ -115,17 +145,17 @@ public class AuthCustomerController : ControllerBase
                 }
                 return null;
             });
-
             if (result != null && Argon2.Verify(result.Properties["password"]?.ToString(), loginModel.Password))
             {
-                return Ok(new
+                return Ok(new ResponseTokenModel
                 {
-                    accessToken = CreateJWT(new JwtModel
+                    AccessToken = CreateJWT(new JwtModel
                     {
                         Email = result.Properties["email"]?.ToString(),
                         Id = result.Properties["id"]?.ToString(),
                         Role = result.Properties["role"]?.ToString()
-                    })
+                    }),
+                    RefreshToken = await GenerateAndSaveRefreshTokenAsync(loginModel)
                 });
             }
             return BadRequest(new
@@ -153,9 +183,78 @@ public class AuthCustomerController : ControllerBase
             issuer: configuration.GetValue<string>("AppSettings:Issuer")!,
             audience: configuration.GetValue<string>("AppSettings:Audience")!,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(24),
+            expires: DateTime.UtcNow.AddHours(2),
             signingCredentials: creds
         );
         return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+    }
+    private string GenerateRefreshToken()
+    {
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+    }
+
+    private async Task<string> GenerateAndSaveRefreshTokenAsync(LoginModel loginData)
+    {
+        var refreshToken = GenerateRefreshToken();
+        var context = new EditCustomerController(configuration);
+        Console.WriteLine("AAAAAAAAAAA");
+        await context.EditCustomerAsync(new KupacModel
+        {
+            RefreshToken = refreshToken,
+            RefreshTokenTimeExpire = DateTime.UtcNow.AddDays(7),
+            Email = loginData.Email,
+            Password = loginData.Password,
+            Role = "",
+            Ime = "",
+            Prezime = "",
+            BrTel = ""
+        });
+        return refreshToken;
+    }
+    [HttpPost]
+    [Route("refresh-token")]
+    public async Task<ActionResult> ValidateRefreshTokenAsync([FromBody] ValidateTokenDTO validateToken)
+    {
+        try
+        {
+            await driver.VerifyConnectivityAsync();
+            await using var session = driver.AsyncSession();
+
+            var query = @"
+            MATCH (n:Customer {id: $id})
+            RETURN n";
+            var parameters = new Dictionary<string, object>
+            {
+                {"id",validateToken.UserId}
+            };
+            var result = await session.ExecuteReadAsync(async tx =>
+            {
+                var response = await tx.RunAsync(query, parameters);
+                if (await response.FetchAsync())
+                {
+                    return response.Current["n"].As<INode>();
+                }
+                return null;
+            });
+
+            if (result is null || result.Properties["refreshToken"].ToString() != validateToken.RefreshToken)
+            {
+                return BadRequest("The refresh token has expire");
+            }
+            return Ok(new ResponseTokenModel
+            {
+                AccessToken = CreateJWT(new JwtModel
+                {
+                    Email = result.Properties["email"]?.ToString(),
+                    Id = result.Properties["id"]?.ToString(),
+                    Role = result.Properties["role"]?.ToString()
+                }),
+                RefreshToken = await GenerateAndSaveRefreshTokenAsync(new LoginModel(result.Properties["email"].ToString(), result.Properties["password"].ToString()))
+            });
+        }
+        catch (Exception ex)
+        {
+            return NotFound(new { message = "False", error = ex });
+        }
     }
 }

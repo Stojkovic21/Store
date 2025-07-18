@@ -26,7 +26,7 @@ public class DeleteCustomerController : ControllerBase
         return Ok("You are authenticated");
     }
 
-    [Authorize(Roles = "Admin,User")]
+    //[Authorize(Roles = "Admin,User")]
     [HttpDelete]
     [Route("delete/{id}")]
     public async Task<ActionResult> DeleteCustomerAsync(int id)

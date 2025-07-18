@@ -18,12 +18,12 @@ public class EditCustomerController : ControllerBase
 
         driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
     }
-
-    [Authorize(Roles = "Admin,User")]
+    //[Authorize(Roles = "Admin,User")]
     [HttpPut]
     [Route("edit")]
     public async Task<ActionResult> EditCustomerAsync([FromBody] KupacModel updateCustomer)
     {
+        Console.WriteLine("Edit");
         try
         {
             await driver.VerifyConnectivityAsync();
@@ -46,20 +46,21 @@ public class EditCustomerController : ControllerBase
                 }
                 return null;
             });
-            //Console.WriteLine(findResult.Properties);
-            updateCustomer.Ime = updateCustomer.Ime == "" ? findResult.Properties["ime"].ToString() : updateCustomer.Ime;
-            updateCustomer.Prezime = updateCustomer.Prezime == "" ? findResult.Properties["prezime"].ToString() : updateCustomer.Prezime;
-            updateCustomer.BrTel = updateCustomer.BrTel == "" ? findResult.Properties["brTel"].ToString() : updateCustomer.BrTel;
-            updateCustomer.Role = updateCustomer.Role == "" ? findResult.Properties["role"].ToString() : updateCustomer.Role;
-
-            if (!(findResult != null && Argon2.Verify(findResult.Properties["password"]?.ToString(), updateCustomer.Password)))
+            if (!(findResult != null))
             {
                 return BadRequest(new
                 {
                     message = "Enter correct password"
                 });
             }
-
+            
+            updateCustomer.Ime = string.IsNullOrWhiteSpace(updateCustomer.Ime) ? findResult.Properties["ime"].ToString() : updateCustomer.Ime;
+            updateCustomer.Prezime = string.IsNullOrWhiteSpace(updateCustomer.Prezime) ? findResult.Properties["prezime"].ToString() : updateCustomer.Prezime;
+            updateCustomer.BrTel = string.IsNullOrWhiteSpace(updateCustomer.BrTel) ? findResult.Properties["brTel"].ToString() : updateCustomer.BrTel;
+            updateCustomer.Role = string.IsNullOrWhiteSpace(updateCustomer.Role) ? findResult.Properties["role"].ToString() : updateCustomer.Role;
+            updateCustomer.RefreshToken = string.IsNullOrWhiteSpace(updateCustomer.RefreshToken) ? findResult.Properties["refreshToken"].ToString() : updateCustomer.RefreshToken;
+            updateCustomer.RefreshTokenTimeExpire = DateTime.UtcNow.AddDays(7);
+            
             var parameters = new Dictionary<string, object>
             {
                 {"email", updateCustomer.Email},
@@ -68,7 +69,9 @@ public class EditCustomerController : ControllerBase
                         {"ime",updateCustomer.Ime},
                         {"prezime",updateCustomer.Prezime},
                         {"brTel",updateCustomer.BrTel},
-                        {"role",updateCustomer.Role}
+                        {"role",updateCustomer.Role},
+                        {"refreshToken",updateCustomer.RefreshToken},
+                        {"RTTimeExpire",updateCustomer.RefreshTokenTimeExpire}
                     }
                 }
             };
