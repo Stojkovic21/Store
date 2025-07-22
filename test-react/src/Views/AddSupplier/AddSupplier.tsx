@@ -3,51 +3,63 @@ import Header from "../Header/Header";
 import "../style/Card.css";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import CategoryDTO from "../../DTOs/CategoryDTO";
-//import useRefreshToken from "../../hooks/useRefreshToken";
-export default function AddCategoty() {
-  const [getAllCategorys, setAllCategorys] = useState<CategoryDTO[]>([]);
-  //const refresh = useRefreshToken();
+import SupplierDTO from "../../DTOs/SuppliersDTO";
+
+export default function AddSupplier() {
+  const [getAllSuppliers, setAllSuppliers] = useState<SupplierDTO[]>([]);
   useEffect(() => {
     const FetchItem = async () => {
       try {
-        const allCategorys = await axios.get(
-          "http://localhost:5057/category/get/all"
+        const allSuppliers = await axios.get(
+          "http://localhost:5057/supplier/get/all"
         );
-        setAllCategorys(allCategorys.data.categorys);
+        setAllSuppliers(allSuppliers.data.suppliers);
       } catch (error) {}
     };
     FetchItem();
   }, []);
-  const onSubmit: SubmitHandler<CategoryDTO> = async (data) => {
-    data.id = getAllCategorys.length;
-    await axios.post("http://localhost:5057/category/add", data).catch();
+  const onSubmit: SubmitHandler<SupplierDTO> = async (data) => {
+    data.id=getAllSuppliers.length;
+    await axios.post("http://localhost:5057/supplier/add",data).catch();
     window.location.reload();
   };
   const {
     register,
     handleSubmit,
     formState: { isSubmitting, errors },
-  } = useForm<CategoryDTO>();
+  } = useForm<SupplierDTO>();
 
   return (
     <>
       <Header />
       <div className="card-container">
         <div className="card">
-          <h2>Add New Category</h2>
+          <h2>Add New Supplier</h2>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="mb-3">
               <label className="form-label">Name</label>
               <input
                 {...register("name", { required: "*Name is required" })}
-                placeholder="Enter category name"
+                placeholder="Enter supplier name"
                 name="name"
                 className="form-control"
                 type="text"
               />
               {errors.name && (
                 <div className="redError">{errors.name.message}</div>
+              )}
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Email</label>
+              <input
+                {...register("email", { required: "*Email is required" })}
+                placeholder="Enter supplier email"
+                name="email"
+                className="form-control"
+                type="text"
+              />
+              {errors.email && (
+                <div className="redError">{errors.email.message}</div>
               )}
             </div>
             <button

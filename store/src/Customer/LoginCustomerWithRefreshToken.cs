@@ -34,9 +34,9 @@ internal sealed class LoginCustomerWithRefreshToken(IDriver driver, ResponseToke
 
             }
         }
-        catch (Exception ex)
+        catch
         {
-            
+            Console.WriteLine("Puklo u LoginCustomerWithRefreshToken");
         }
     }
 }

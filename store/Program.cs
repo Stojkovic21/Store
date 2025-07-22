@@ -8,9 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(builder =>
 {
-    builder.AddPolicy("AllowAll", options =>
+    builder.AddPolicy("AllowFrontend", options =>
     {
-        options.AllowAnyOrigin()
+        options.WithOrigins("http://localhost:5173")
+            .AllowCredentials()
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
@@ -44,9 +45,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+app.UseAuthentication();
 app.MapControllers();
 app.Run();

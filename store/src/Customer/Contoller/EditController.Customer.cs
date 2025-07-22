@@ -23,7 +23,6 @@ public class EditCustomerController : ControllerBase
     [Route("edit")]
     public async Task<ActionResult> EditCustomerAsync([FromBody] KupacModel updateCustomer)
     {
-        Console.WriteLine("Edit");
         try
         {
             await driver.VerifyConnectivityAsync();

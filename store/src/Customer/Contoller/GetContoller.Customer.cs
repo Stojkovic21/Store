@@ -1,3 +1,5 @@
+using System.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Neo4j.Driver;
 
@@ -16,7 +18,7 @@ public class GetCustomerController : ControllerBase
 
         this.driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
     }
-
+    [Authorize]
     [HttpGet]
     [Route("get/all")]
     public async Task<ActionResult> GetAllCustomerAsync()
@@ -87,7 +89,48 @@ public class GetCustomerController : ControllerBase
                 return Ok(new
                 {
                     message = "True",
-                    Category = result.Properties
+                    Customer = result.Properties
+                });
+            }
+            else return NotFound(new { message = "Customer is not found" });
+        }
+        catch (Exception ex)
+        {
+            return NotFound(new { message = "False", error = ex });
+        }
+    }
+    [HttpGet]
+    [Route("me")]
+    public async Task<ActionResult> GetMe()
+    {
+        string refreshToken = Request.Cookies["refreshToken"].ToString();
+        
+        try
+        {
+            await driver.VerifyConnectivityAsync();
+            await using var session = driver.AsyncSession();
+
+            var query = @"
+            MATCH (n:Customer {refreshToken: $refreshToken})
+            RETURN n";
+            var parameters = new Dictionary<string, object>
+            {
+                {"refreshToken",refreshToken}
+            };
+            var result = await session.ExecuteReadAsync(async tx =>
+            {
+                var response = await tx.RunAsync(query, parameters);
+                if (await response.FetchAsync())
+                {
+                    return response.Current["n"].As<INode>();
+                }
+                return null;
+            });
+            if (result != null)
+            {
+                return Ok(new
+                {
+                    Customer = result.Properties
                 });
             }
             else return NotFound(new { message = "Customer is not found" });

@@ -1,7 +1,7 @@
 import itemDto from "../../DTOs/ItemDto";
 import Artikal from "../Artikal/Artikal";
 import "./Polica.css";
-import axios from "axios";
+import axios from "../../api/axios";
 import { useEffect, useState } from "react";
 //nisam siguran sto sam ga napravio ali neka ga mozda skuzim
 // let id:string="0";
@@ -15,30 +15,30 @@ import { useEffect, useState } from "react";
 // }
 
 // useEffect(() => {
-  //   const fetchItems = async () => {
-    //     try {
-      //       const response = await axios.get("http://localhost:5057/Item/Get/all");
-      //       setItems(response.data);
-      //     } catch (err) {
-        //     } finally {
-          //     }
-          //   };
-          
-          //   fetchItems();
-          // }, []);
-          
-function Polica() {            
-  const [items, setItems]= useState<itemDto[]>([]);
+//   const fetchItems = async () => {
+//     try {
+//       const response = await axios.get("http://localhost:5057/Item/Get/all");
+//       setItems(response.data);
+//     } catch (err) {
+//     } finally {
+//     }
+//   };
+
+//   fetchItems();
+// }, []);
+
+function Polica() {
+  const [items, setItems] = useState<itemDto[]>([]);
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("http://localhost:5057/Item/Get/all");
+        const response = await axios.get("/item/Get/all");
         setItems(response.data.items);
       } catch (err) {
       } finally {
       }
     };
-  
+
     fetchItems();
   }, []);
 
@@ -46,9 +46,9 @@ function Polica() {
   return (
     <>
       <div className="polica">
-        {items ?items.map((item) => (
-          <Artikal key={item.id}{...item} />
-        )):null}
+        {items
+          ? items.map((item) => <Artikal key={item.id} {...item} />)
+          : null}
       </div>
 
       {/*<button onClick={fetchData}> dugme </button>*/}

@@ -147,6 +147,14 @@ public class AuthCustomerController : ControllerBase
             });
             if (result != null && Argon2.Verify(result.Properties["password"]?.ToString(), loginModel.Password))
             {
+                var refreshToken = await GenerateAndSaveRefreshTokenAsync(loginModel);
+                Response.Cookies.Append("refreshToken", refreshToken.ToString(), new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7)
+                });
                 return Ok(new ResponseTokenModel
                 {
                     AccessToken = CreateJWT(new JwtModel
@@ -155,7 +163,18 @@ public class AuthCustomerController : ControllerBase
                         Id = result.Properties["id"]?.ToString(),
                         Role = result.Properties["role"]?.ToString()
                     }),
-                    RefreshToken = await GenerateAndSaveRefreshTokenAsync(loginModel)
+                    RefreshToken = refreshToken //ovo ne bi trebalo da salje na front
+                    // User = new KupacModel
+                    // {
+                    //     Ime = result.Properties["ime"].ToString(),
+                    //     Prezime = "",
+                    //     Email = loginData.Email,
+                    //     Password = loginData.Password,
+                    //     Role = "",
+                    //     BrTel = ""
+                    //     RefreshToken = refreshToken,
+                    //     RefreshTokenTimeExpire = DateTime.UtcNow.AddDays(7),
+                    // }
                 });
             }
             return BadRequest(new
@@ -197,7 +216,6 @@ public class AuthCustomerController : ControllerBase
     {
         var refreshToken = GenerateRefreshToken();
         var context = new EditCustomerController(configuration);
-        Console.WriteLine("AAAAAAAAAAA");
         await context.EditCustomerAsync(new KupacModel
         {
             RefreshToken = refreshToken,
@@ -211,21 +229,22 @@ public class AuthCustomerController : ControllerBase
         });
         return refreshToken;
     }
-    [HttpPost]
+    [HttpGet]
     [Route("refresh-token")]
-    public async Task<ActionResult> ValidateRefreshTokenAsync([FromBody] ValidateTokenDTO validateToken)
+    public async Task<ActionResult> ValidateRefreshTokenAsync()
     {
+        var refreshToken = Request.Cookies["refreshToken"];
         try
         {
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
             var query = @"
-            MATCH (n:Customer {id: $id})
+            MATCH (n:Customer {refreshToken: $refreshToken})
             RETURN n";
             var parameters = new Dictionary<string, object>
             {
-                {"id",validateToken.UserId}
+                {"refreshToken",refreshToken}
             };
             var result = await session.ExecuteReadAsync(async tx =>
             {
@@ -237,7 +256,7 @@ public class AuthCustomerController : ControllerBase
                 return null;
             });
 
-            if (result is null || result.Properties["refreshToken"].ToString() != validateToken.RefreshToken)
+            if (result is null || result.Properties["refreshToken"].ToString() != refreshToken)
             {
                 return BadRequest("The refresh token has expire");
             }
