@@ -1,14 +1,14 @@
 import itemDto from "../../DTOs/ItemDto";
 import "./Artikal.css";
-//import { ReactNode } from "react"
+
 function Artikal(item: itemDto) {
   return (
     <>
       <div className="card shadow-lg rounded-2xl kartica">
         <h2 className="card-titel">{item.name}</h2>
-        <p className="text-gray-700">
+        {/* <p className="text-gray-700">
           Brend: <span className="font-semibold">{item.brend}</span>
-        </p>
+        </p> */}
         <p className="text-gray-700">
           Grama: <span className="font-semibold">{item.netoQuantity}g</span>
         </p>

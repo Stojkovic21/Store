@@ -7,7 +7,6 @@ import Additem from "./Views/AddItem/AddItem";
 import AddCategoty from "./Views/AddCategory/AddCategory";
 import AddSupplier from "./Views/AddSupplier/AddSupplier";
 import { AuthContext } from "./context/AuthContrext";
-import AuthProvider from "./Views/Auth/AuthProvider";
 
 const router = createBrowserRouter([
   //razlika izmedju link i a je sto a refresuje ceo html i js a link samo prosledi na tu stranicu

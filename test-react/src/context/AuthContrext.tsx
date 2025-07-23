@@ -1,5 +1,4 @@
 import { createContext, useState, PropsWithChildren } from "react";
-import customerDto from "../DTOs/CustomerDto";
 
 // interface AuthData {
 //   user?: string;
@@ -17,7 +16,8 @@ const AuthProviderContext = createContext<AuthProviderContextValue | undefined>(
 export type AuthProviderContextValue = {
   isAuthenticated: boolean;
   accessToken: string | null | undefined;
-  //user: customerDto | null;
+  // userId: number | undefined;
+  // role: string | null;
   handleSignIn: (accessToken: string) => void;
   handleSignOut: () => void;
 };
@@ -29,10 +29,14 @@ export function AuthContext({ children }: AuthProviderProps) {
   const [accessToken, setAccessToken] = useState<string | null | undefined>(
     null
   );
+  // const [role, setRole] = useState("Ghues");
+  // const [userId, setUserID] = useState<number>();
 
   function handleSignIn(accessToken: string) {
     setIsAuthenticated(true);
     setAccessToken(accessToken);
+    // setRole(role);
+    // setUserID(userId);
   }
 
   function handleSignOut() {
@@ -44,9 +48,11 @@ export function AuthContext({ children }: AuthProviderProps) {
     <AuthProviderContext
       value={{
         isAuthenticated,
-        accessToken: accessToken,
+        accessToken,
         handleSignIn,
         handleSignOut,
+        // role,
+        // userId,
       }}
     >
       {children}

@@ -1,13 +1,11 @@
-import { get, SubmitHandler, useForm } from "react-hook-form"; //zod
+import { SubmitHandler, useForm } from "react-hook-form"; //zod
 import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "../../api/axios";
 import Header from "../Header/Header";
 import "../style/Card.css";
 import LoginDTO from "../../DTOs/LoginDTO";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import useRefreshToken from "../../hooks/useRefreshToken";
-import AuthProvider from "../Auth/AuthProvider";
 import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 function LoginPage() {
@@ -16,14 +14,13 @@ function LoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginDTO>();
-  const { isAuthenticated, handleSignIn, handleSignOut, accessToken } =
-    useAuth();
+  const { isAuthenticated, handleSignIn } = useAuth();
   const refresh = useRefreshToken();
   const navigate = useNavigate();
   const axiosPrivate = useAxiosPrivate();
   const onSubmit: SubmitHandler<LoginDTO> = async (data) => {
     await new Promise((resolve) => setTimeout(resolve, 100));
-    const response = axios
+    const response = axiosPrivate
       .post("/customer/login", data, {
         withCredentials: true,
       })
@@ -37,9 +34,6 @@ function LoginPage() {
           console.log("sifra ili email nisu dobri");
         }
       });
-    //console.log("Response from login page " + response);
-    //handleSignIn(response.accessToken);
-    //navigate("/");
   };
 
   return (

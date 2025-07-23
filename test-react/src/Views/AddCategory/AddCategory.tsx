@@ -2,18 +2,17 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import Header from "../Header/Header";
 import "../style/Card.css";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import CategoryDTO from "../../DTOs/CategoryDTO";
+import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 //import useRefreshToken from "../../hooks/useRefreshToken";
 export default function AddCategoty() {
   const [getAllCategorys, setAllCategorys] = useState<CategoryDTO[]>([]);
+  const axiosPrivate = useAxiosPrivate();
   //const refresh = useRefreshToken();
   useEffect(() => {
     const FetchItem = async () => {
       try {
-        const allCategorys = await axios.get(
-          "http://localhost:5057/category/get/all"
-        );
+        const allCategorys = await axiosPrivate.get("/category/get/all");
         setAllCategorys(allCategorys.data.categorys);
       } catch (error) {}
     };
@@ -21,7 +20,7 @@ export default function AddCategoty() {
   }, []);
   const onSubmit: SubmitHandler<CategoryDTO> = async (data) => {
     data.id = getAllCategorys.length;
-    await axios.post("http://localhost:5057/category/add", data).catch();
+    await axiosPrivate.post("/category/add", data).catch();
     window.location.reload();
   };
   const {

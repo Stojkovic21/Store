@@ -1,7 +1,7 @@
 import itemDto from "../../DTOs/ItemDto";
 import Artikal from "../Artikal/Artikal";
 import "./Polica.css";
-import axios from "../../api/axios";
+import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import { useEffect, useState } from "react";
 //nisam siguran sto sam ga napravio ali neka ga mozda skuzim
 // let id:string="0";
@@ -29,10 +29,11 @@ import { useEffect, useState } from "react";
 
 function Polica() {
   const [items, setItems] = useState<itemDto[]>([]);
+  const axiosPrivate = useAxiosPrivate();
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("/item/Get/all");
+        const response = await axiosPrivate.get("/item/Get/all");
         setItems(response.data.items);
       } catch (err) {
       } finally {

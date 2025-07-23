@@ -1,7 +1,6 @@
 //import { FormEvent, useCallback, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "./AddItem.css";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import itemDTo from "../../DTOs/ItemDto";
 import "../style/Card.css";
@@ -9,32 +8,23 @@ import Header from "../Header/Header";
 import BrendDTO from "../../DTOs/BrendDTO";
 import RelationshipDTO from "../../DTOs/RelationshipDTO";
 import CategoryDTO from "../../DTOs/CategoryDTO";
+import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 function Additem() {
-  //   const handleSubmit = useCallback((e: FormEvent<any>) => {
-  //   console.log(e);
-  //   e.preventDefault();
-  // }, []);
-  //in form on/Submit={handleSubmit}
   const [items, setItems] = useState<itemDTo[]>([]);
   const [getAllBrends, setAllBrends] = useState<BrendDTO[]>([]);
   const [brend, setBrend] = useState<BrendDTO>();
   const [getAllCategorys, setAllCategorys] = useState<CategoryDTO[]>([]);
   const [category, setCategory] = useState<CategoryDTO>();
+  const axiosPrivate = useAxiosPrivate();
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const responseItem = await axios.get(
-          "http://localhost:5057/item/get/all"
-        );
+        const responseItem = await axiosPrivate.get("/item/get/all");
         setItems(responseItem.data.items);
-        const responceBrend = await axios.get(
-          "http://localhost:5057/supplier/get/all"
-        );
+        const responceBrend = await axiosPrivate.get("/supplier/get/all");
         setAllBrends(responceBrend.data.suppliers);
-        const responceCategory = await axios.get(
-          "http://localhost:5057/category/get/all"
-        );
+        const responceCategory = await axiosPrivate.get("/category/get/all");
         setAllCategorys(responceCategory.data.categorys);
       } catch (err) {
       } finally {
@@ -51,27 +41,25 @@ function Additem() {
 
   const onSubmit: SubmitHandler<itemDTo> = async (data) => {
     data.id = items.length;
-    //data.brend = String(brend?.name);
-
     const brendConnection: RelationshipDTO = {
       sourceId: data.id,
       targetId: Number(brend?.id),
       relationshipType: "Supplies",
     };
 
-    const categoryConnection:RelationshipDTO={
-      sourceId:data.id,
-      targetId:Number(category?.id),
-      relationshipType:"Is",
-    }
-    
-    await axios.post("http://localhost:5057/item/add", data);
+    const categoryConnection: RelationshipDTO = {
+      sourceId: data.id,
+      targetId: Number(category?.id),
+      relationshipType: "Is",
+    };
+
+    await axiosPrivate.post("/item/add", data);
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await axios.post(
-      "http://localhost:5057/relationship/supplier/connect",
-      brendConnection
+    await axiosPrivate.post("/relationship/supplier/connect", brendConnection);
+    await axiosPrivate.post(
+      "/relationship/category/connect",
+      categoryConnection
     );
-    await axios.post("http://localhost:5057/relationship/category/connect",categoryConnection);
     window.location.reload();
   };
 
@@ -119,7 +107,6 @@ function Additem() {
                     ({ id }) => id === Number(e.target.value)
                   );
                   setBrend(b);
-                  //onsole.log(brend);
                 }}
               >
                 <option>Choose a item brend</option>
