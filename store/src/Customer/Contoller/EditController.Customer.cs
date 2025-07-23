@@ -9,6 +9,9 @@ public class EditCustomerController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
+    private readonly Neo4jQuery neo4JQuery;
+    private const string CUSTOMER = "Customer";
+    private const string RETURN = "RETURN";
     public EditCustomerController(IConfiguration configuration)
     {
         this.configuration = configuration;
@@ -17,6 +20,7 @@ public class EditCustomerController : ControllerBase
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
         driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        neo4JQuery = new();
     }
     //[Authorize(Roles = "Admin,User")]
     [HttpPut]
@@ -28,23 +32,12 @@ public class EditCustomerController : ControllerBase
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var findQuery = @"
-            MATCH (n:Customer {email: $email})
-            RETURN n;
-            ";
+            var findQuery = neo4JQuery.QueryByOneElement(CUSTOMER, "email", "email", RETURN);
             var findParameters = new Dictionary<string, object>
             {
                 {"email",updateCustomer.Email}
             };
-            var findResult = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(findQuery, findParameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var findResult = await neo4JQuery.ExecuteReadAsync(session,findQuery,findParameters);
             if (!(findResult != null))
             {
                 return BadRequest(new
@@ -79,15 +72,7 @@ public class EditCustomerController : ControllerBase
             SET n+=$propertis
             RETURN n";
 
-            var updatedNode = await session.ExecuteWriteAsync(async tx =>
-            {
-                var response = await tx.RunAsync(query, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var updatedNode = await neo4JQuery.ExecuteWriteAsync(session,query,parameters);
             if (updatedNode != null)
             {
                 return Ok(new

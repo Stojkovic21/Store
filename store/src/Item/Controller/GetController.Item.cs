@@ -7,7 +7,11 @@ public class GetItemController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
+    private readonly Neo4jQuery neo4JQuery;
+    private const string ITEM = "Item";
+    private const string RETURN = "RETURN";
     public GetItemController(IConfiguration configuration)
+
     {
         this.configuration = configuration;
         var uri = this.configuration.GetValue<string>("Neo4j:Uri");
@@ -15,6 +19,7 @@ public class GetItemController : ControllerBase
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
         this.driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        neo4JQuery = new();
     }
     [Route("get/all")]
     [HttpGet]
@@ -67,26 +72,13 @@ public class GetItemController : ControllerBase
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var query = @"
-            MATCH (n:Item {id:$id})
-            RETURN n";
-
-            // Define default values for missing fields
+            var query = neo4JQuery.QueryByOneElement(ITEM,"id","id",RETURN);
             var parameters = new Dictionary<string, object>
             {
                 { "id", id }
             };
 
-            // Execute the query in a write transaction
-            var result = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(query, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var result = await neo4JQuery.ExecuteReadAsync(session,query,parameters);
             if (result != null)
             {
                 var properties = result.Properties;
@@ -114,27 +106,13 @@ public class GetItemController : ControllerBase
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var query = @"
-            MATCH (n:Item {name:$name})
-            RETURN n";
-
-            // Define default values for missing fields
+            var query = neo4JQuery.QueryByOneElement(ITEM,"name","name",RETURN);
             var parameters = new Dictionary<string, object>
             {
                 { "name", naziv }
             };
 
-            // Execute the query in a write transaction
-            var result = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(query, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-
-                return null;
-            });
+            var result = await neo4JQuery.ExecuteReadAsync(session,query,parameters);
             if (result != null)
             {
                 var properties = result.Properties;

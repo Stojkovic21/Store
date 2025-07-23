@@ -7,6 +7,9 @@ public class DeleteItemController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
+    private readonly Neo4jQuery neo4JQuery;
+    private const string ITEM = "Item";
+    private const string RETURN = "RETURN";
     public DeleteItemController(IConfiguration configuration)
     {
         this.configuration = configuration;
@@ -15,6 +18,7 @@ public class DeleteItemController : ControllerBase
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
         this.driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        neo4JQuery = new();
     }
     [Route("delete/{id}")]
     [HttpDelete]
@@ -26,9 +30,7 @@ public class DeleteItemController : ControllerBase
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var testQuety = @"
-            MATCH (n:Item {id: $id})
-            RETURN n";
+            var testQuety = neo4JQuery.QueryByOneElement(ITEM,"id","id",RETURN);
             var deleteQuery = @"
             MATCH (n:Item {id: $id})
             DETACH DELETE n";
@@ -37,23 +39,11 @@ public class DeleteItemController : ControllerBase
                 { "id", id }
             };
 
-            var result = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(testQuety, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var result = await neo4JQuery.ExecuteReadAsync(session,testQuety,parameters);
             if (result != null)
             {
-                var res = await session.ExecuteWriteAsync(async tx =>
-                {
-                    await tx.RunAsync(deleteQuery, parameters);
-                    return new { message = "Nodes deleted successfully!" };
-                });
-                return Ok(res);
+                var res = await neo4JQuery.ExecuteWriteAsync(session,deleteQuery,parameters);
+                return Ok("Node deleted successfully");
             }
             else return NotFound(new { message = "Not found" });
 

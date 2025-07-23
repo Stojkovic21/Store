@@ -7,6 +7,9 @@ public class EditOrderController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
+    private readonly Neo4jQuery neo4JQuery;
+    private const string ORDER = "Order";
+    private const string RETURN = "RETURN";
     public EditOrderController(IConfiguration configuration)
     {
         this.configuration = configuration;
@@ -15,6 +18,7 @@ public class EditOrderController : ControllerBase
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
         driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        neo4JQuery = new();
     }
     [HttpPut]
     [Route("put/{id}")]
@@ -40,15 +44,7 @@ public class EditOrderController : ControllerBase
             SET n+=$propertis
             RETURN n";
 
-            var updatedNode = await session.ExecuteWriteAsync(async tx =>
-            {
-                var response = await tx.RunAsync(query, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var updatedNode = await neo4JQuery.ExecuteWriteAsync(session,query,parameters);
             if (updatedNode != null)
             {
                 return Ok(new

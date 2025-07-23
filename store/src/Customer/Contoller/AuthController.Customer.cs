@@ -13,6 +13,9 @@ public class AuthCustomerController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
+    private readonly Neo4jQuery neo4JQuery;
+    private const string CUSTOMER = "Cutomer";
+    private const string RETURN = "RETURN";
     public AuthCustomerController(IConfiguration configuration)
     {
         this.configuration = configuration;
@@ -21,6 +24,7 @@ public class AuthCustomerController : ControllerBase
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
         this.driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        neo4JQuery = new();
     }
 
     [Route("signup")]
@@ -35,10 +39,7 @@ public class AuthCustomerController : ControllerBase
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var testQuery = @"
-                MATCH (n:Customer {email: $email})
-                RETURN n";
-
+            var testQuery = neo4JQuery.QueryByOneElement(CUSTOMER, "email", "email",RETURN);
             var createQuery = @"
                 CREATE (n:Customer {
                     id: $id, 
@@ -66,54 +67,45 @@ public class AuthCustomerController : ControllerBase
                 {"RTTimeExpire", kupacModel.RefreshTokenTimeExpire}
             };
 
-            var existingCustomer = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(testQuery, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var existingCustomer = await neo4JQuery.ExecuteReadAsync(session, testQuery, parameters);
 
             if (existingCustomer != null)
             {
                 return Conflict(new { message = "Customer already exists" });
             }
 
-            var newCustomer = await session.ExecuteWriteAsync(async tx =>
-            {
-                var response = await tx.RunAsync(createQuery, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var newCustomer = await neo4JQuery.ExecuteWriteAsync(session,createQuery,parameters);
 
-            if (newCustomer == null)
+            if (newCustomer != null)
             {
-                return StatusCode(500, new { message = "Failed to create customer" });
-            }
-
-            return Ok(
-                new ResponseTokenModel
+                var refreshToken = await GenerateAndSaveRefreshTokenAsync(new LoginModel(kupacModel.Email, kupacModel.Password));
+                Response.Cookies.Append("refreshToken", kupacModel.RefreshToken.ToString(), new CookieOptions
                 {
-                    AccessToken = CreateJWT(new JwtModel
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7)
+                });
+                return Ok(
+                    new ResponseTokenModel
                     {
-                        Email = newCustomer.Properties["email"]?.ToString(),
-                        Id = newCustomer.Properties["id"]?.ToString(),
+                        AccessToken = CreateJWT(new JwtModel
+                        {
+                            Email = newCustomer.Properties["email"]?.ToString(),
+                            UserId = newCustomer.Properties["id"]?.ToString(),
+                            Role = newCustomer.Properties["role"]?.ToString()
+                        }),
+                        UserId = int.Parse(newCustomer.Properties["id"].ToString()),
                         Role = newCustomer.Properties["role"]?.ToString()
-                    }),
-                    RefreshToken = await GenerateAndSaveRefreshTokenAsync(new LoginModel(kupacModel.Email, kupacModel.Password))
-                }
-            );
+                    }
+                );
+            }
+            return StatusCode(500, new { message = "Failed to create customer" });
         }
         catch (Exception ex)
         {
             return BadRequest(new { error = ex.Message });
         }
-
     }
     [HttpPost]
     [Route("login")]
@@ -123,9 +115,7 @@ public class AuthCustomerController : ControllerBase
         {
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
-            var testQuety = @"
-                MATCH (n:Customer {email: $email})
-                RETURN n";
+            var testQuety = neo4JQuery.QueryByOneElement(CUSTOMER,"email","email",RETURN);
             var parameters = new Dictionary<string, object>
             {
                 {"id",""},
@@ -136,15 +126,7 @@ public class AuthCustomerController : ControllerBase
                 {"brTel",""},
                 {"role",""}
             };
-            var result = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(testQuety, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var result = await neo4JQuery.ExecuteReadAsync(session,testQuety,parameters);
             if (result != null && Argon2.Verify(result.Properties["password"]?.ToString(), loginModel.Password))
             {
                 var refreshToken = await GenerateAndSaveRefreshTokenAsync(loginModel);
@@ -160,21 +142,11 @@ public class AuthCustomerController : ControllerBase
                     AccessToken = CreateJWT(new JwtModel
                     {
                         Email = result.Properties["email"]?.ToString(),
-                        Id = result.Properties["id"]?.ToString(),
+                        UserId = result.Properties["id"]?.ToString(),
                         Role = result.Properties["role"]?.ToString()
                     }),
-                    RefreshToken = refreshToken //ovo ne bi trebalo da salje na front
-                    // User = new KupacModel
-                    // {
-                    //     Ime = result.Properties["ime"].ToString(),
-                    //     Prezime = "",
-                    //     Email = loginData.Email,
-                    //     Password = loginData.Password,
-                    //     Role = "",
-                    //     BrTel = ""
-                    //     RefreshToken = refreshToken,
-                    //     RefreshTokenTimeExpire = DateTime.UtcNow.AddDays(7),
-                    // }
+                    UserId = int.Parse(result.Properties["id"].ToString()),
+                    Role = result.Properties["role"]?.ToString(),
                 });
             }
             return BadRequest(new
@@ -191,7 +163,7 @@ public class AuthCustomerController : ControllerBase
     {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier,user.Id),
+            new(ClaimTypes.NameIdentifier,user.UserId),
             new(ClaimTypes.Name,user.Email),
             new(ClaimTypes.Role,user.Role)   //Sve sto treba da bude u jwt tokenu se smesta u Claim
         };
@@ -239,37 +211,29 @@ public class AuthCustomerController : ControllerBase
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var query = @"
-            MATCH (n:Customer {refreshToken: $refreshToken})
-            RETURN n";
+            var query = neo4JQuery.QueryByOneElement(CUSTOMER, "refreshToken", "refreshToken",RETURN);
             var parameters = new Dictionary<string, object>
             {
                 {"refreshToken",refreshToken}
             };
-            var result = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(query, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var result = await neo4JQuery.ExecuteReadAsync(session,query,parameters);
 
-            if (result is null || result.Properties["refreshToken"].ToString() != refreshToken)
+            if (result is not null)//provera da li je token istekao
             {
-                return BadRequest("The refresh token has expire");
-            }
-            return Ok(new ResponseTokenModel
-            {
-                AccessToken = CreateJWT(new JwtModel
+                var newRefreshToken = await GenerateAndSaveRefreshTokenAsync(new LoginModel(result.Properties["email"].ToString(), result.Properties["password"].ToString()));
+                return Ok(new ResponseTokenModel
                 {
-                    Email = result.Properties["email"]?.ToString(),
-                    Id = result.Properties["id"]?.ToString(),
-                    Role = result.Properties["role"]?.ToString()
-                }),
-                RefreshToken = await GenerateAndSaveRefreshTokenAsync(new LoginModel(result.Properties["email"].ToString(), result.Properties["password"].ToString()))
-            });
+                    AccessToken = CreateJWT(new JwtModel
+                    {
+                        Email = result.Properties["email"]?.ToString(),
+                        UserId = result.Properties["id"]?.ToString(),
+                        Role = result.Properties["role"]?.ToString()
+                    }),
+                    UserId =int.Parse(result.Properties["id"]?.ToString()),
+                    Role = result.Properties["role"]?.ToString(),
+                });
+            }
+            return BadRequest("The refresh token has expire"); //ponovno logovanje
         }
         catch (Exception ex)
         {

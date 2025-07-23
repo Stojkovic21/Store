@@ -7,6 +7,9 @@ public class AddItemController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
+    private readonly Neo4jQuery neo4JQuery;
+    private const string ITEM = "Item";
+    private const string RETURN = "RETURN";
     public AddItemController(IConfiguration configuration)
     {
         this.configuration = configuration;
@@ -15,6 +18,7 @@ public class AddItemController : ControllerBase
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
         this.driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        neo4JQuery = new();
     }
     [Route("add")]
     [HttpPost]
@@ -24,10 +28,7 @@ public class AddItemController : ControllerBase
         {
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
-            //if (item.Name == "" || item.Brend) return BadRequest("Unesite Naziv i Brand");
-            var testQuety = @"
-            MATCH (n:Item {id: $id})
-            RETURN n";
+            var testQuety = neo4JQuery.QueryByOneElement(ITEM,"id","id",RETURN);
             var query = @"
             CREATE (n:Item {id:$id, name: $name, price: $price, netoQuantity: $netoQuantity, availableQuantity: $availableQuantity})";
 
@@ -39,25 +40,13 @@ public class AddItemController : ControllerBase
                 { "netoQuantity", item.NetoQuantity },
                 { "availableQuantity", item.AvailableQuantity },
             };
-            var result = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(testQuety, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var result = await neo4JQuery.ExecuteReadAsync(session,testQuety,parameters);
             if (result == null)
             {
-                var res = await session.ExecuteWriteAsync(async tx =>
-                {
-                    await tx.RunAsync(query, parameters);
-                    return "Nodes added successfully!";
-                });
-                return Ok(res);
+                var res = await neo4JQuery.ExecuteWriteAsync(session,query,parameters);
             }
             else return NotFound(new { message = "Node " + item.Id + " existing" });
+            return Ok("Node added successfully");
         }
         catch (Exception ex)
         {

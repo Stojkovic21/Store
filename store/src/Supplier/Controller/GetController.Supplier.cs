@@ -7,6 +7,9 @@ public class GetSupplierController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
+    private readonly Neo4jQuery neo4JQuery;
+    private const string SUPPLIER = "Supplier";
+    private const string RETURN = "RETURN";
     public GetSupplierController(IConfiguration configuration)
     {
         this.configuration = configuration;
@@ -15,6 +18,7 @@ public class GetSupplierController : ControllerBase
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
         driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        neo4JQuery = new();
     }
     [HttpGet]
     [Route("get/all")]
@@ -65,22 +69,12 @@ public class GetSupplierController : ControllerBase
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var query = @"
-            MATCH (n:Supplier {id: $id})
-            RETURN n";
+            var query = neo4JQuery.QueryByOneElement(SUPPLIER,"id","id",RETURN);
             var parameters = new Dictionary<string, object>
             {
                 {"id",id}
             };
-            var result = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(query, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var result = await neo4JQuery.ExecuteReadAsync(session,query,parameters);
             if (result != null)
             {
                 return Ok(new

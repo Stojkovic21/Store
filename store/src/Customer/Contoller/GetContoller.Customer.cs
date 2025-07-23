@@ -9,6 +9,10 @@ public class GetCustomerController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
+    private readonly Neo4jQuery neo4JQuary;
+    private const string RETURN="RETURN";
+    private const string CUSTOMER = "Customer";
+
     public GetCustomerController(IConfiguration configuration)
     {
         this.configuration = configuration;
@@ -17,8 +21,9 @@ public class GetCustomerController : ControllerBase
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
         this.driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        neo4JQuary = new();
     }
-    [Authorize]
+    //[Authorize]
     [HttpGet]
     [Route("get/all")]
     public async Task<ActionResult> GetAllCustomerAsync()
@@ -27,12 +32,10 @@ public class GetCustomerController : ControllerBase
         {
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
-
-            var query = @"
-            MATCH (n:Customer)
-            RETURN n";
+            var query = $"MATCH (n:{CUSTOMER})RETURN n";
             var parameters = new Dictionary<string, object>
             {
+                {"Customer",CUSTOMER}
             };
             var result = await session.ExecuteReadAsync(async tx =>
             {
@@ -68,22 +71,12 @@ public class GetCustomerController : ControllerBase
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var query = @"
-            MATCH (n:Customer {id: $id})
-            RETURN n";
+            var query = neo4JQuary.QueryByOneElement("Customer", "id", "id",RETURN);
             var parameters = new Dictionary<string, object>
             {
                 {"id",id}
             };
-            var result = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(query, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+            var result = await neo4JQuary.ExecuteReadAsync(session,query,parameters);
             if (result != null)
             {
                 return Ok(new
@@ -110,22 +103,14 @@ public class GetCustomerController : ControllerBase
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var query = @"
-            MATCH (n:Customer {refreshToken: $refreshToken})
-            RETURN n";
+            var query = neo4JQuary.QueryByOneElement("Customer", "refreshToken", "refreshToken",RETURN);
             var parameters = new Dictionary<string, object>
             {
                 {"refreshToken",refreshToken}
             };
-            var result = await session.ExecuteReadAsync(async tx =>
-            {
-                var response = await tx.RunAsync(query, parameters);
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-                return null;
-            });
+
+            var result = await neo4JQuary.ExecuteReadAsync(session,query, parameters);
+
             if (result != null)
             {
                 return Ok(new

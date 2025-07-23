@@ -8,6 +8,7 @@ public class EditItemController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
+    private readonly Neo4jQuery neo4JQuery;
     public EditItemController(IConfiguration configuration)
     {
         this.configuration = configuration;
@@ -16,6 +17,7 @@ public class EditItemController : ControllerBase
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
         this.driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        neo4JQuery = new();
     }
     [HttpPut]
     [Route("put/{id}")]
@@ -43,20 +45,7 @@ public class EditItemController : ControllerBase
                     }
                 }
             };
-            var updatedNode = await session.ExecuteWriteAsync(async tx =>
-            {
-                var response = await tx.RunAsync(query, parameters);
-
-                // Check if the query returned a node
-                if (await response.FetchAsync())
-                {
-                    return response.Current["n"].As<INode>();
-                }
-
-                return null;
-            });
-
-            // If the node was updated successfully
+            var updatedNode = await neo4JQuery.ExecuteWriteAsync(session,query,parameters);
             if (updatedNode != null)
             {
                 var properties = updatedNode.Properties;

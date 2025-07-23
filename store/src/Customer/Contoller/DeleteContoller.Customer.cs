@@ -8,6 +8,10 @@ public class DeleteCustomerController : ControllerBase
 {
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
+    private readonly Neo4jQuery neo4JQuery;
+    private const string DELETE="DELETE";
+    private const string CUSTOMER = "Customer";
+    private const string RETURN = "RETURN";
     public DeleteCustomerController(IConfiguration configuration)
     {
         this.configuration = configuration;
@@ -16,6 +20,7 @@ public class DeleteCustomerController : ControllerBase
         var password = this.configuration.GetValue<string>("Neo4j:Password");
 
         driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        neo4JQuery = new();
     }
 
     [Authorize(Roles = "Admin")]
@@ -40,21 +45,9 @@ public class DeleteCustomerController : ControllerBase
             {
                 {"id",id}
             };
-            var testQuety = @"
-            MATCH (n:Customer {id: $id})
-            RETURN n";
-            var deleteQuery = @"
-            MATCH (n:Customer {id: $id})
-            DELETE n";
-            var result = await session.ExecuteReadAsync(async tx =>
-             {
-                 var response = await tx.RunAsync(testQuety, parameters);
-                 if (await response.FetchAsync())
-                 {
-                     return response.Current["n"].As<INode>();
-                 }
-                 return null;
-             });
+            var testQuety = neo4JQuery.QueryByOneElement(CUSTOMER,"id","id",RETURN);
+            var deleteQuery = neo4JQuery.QueryByOneElement(CUSTOMER, "id", "id", DELETE);
+            var result = await neo4JQuery.ExecuteReadAsync(session,testQuety,parameters);
             if (result != null)
             {
                 await session.ExecuteWriteAsync(async tx =>
