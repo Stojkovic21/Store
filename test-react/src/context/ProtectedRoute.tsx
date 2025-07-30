@@ -9,14 +9,14 @@ export default function ProtectedRoute({
   allowRoles,
   children,
 }: ProtectedRouteProps) {
-  //   const { user } = useAuth();
+  const { role } = useAuth();
 
-  //   if (user === undefined) {
-  //     return <div>Loading...</div>;
-  //   }
-  //   if (user === null || (allowRoles && !allowRoles.includes(user.role))) {
-  //     return <div>Permission denied</div>;
-  //   }
+  if (role === undefined) {
+    return <div>Loading...</div>;
+  }
+  if (allowRoles && !allowRoles.includes(role)) {
+    return <div>Permission denied</div>;
+  }
 
   return children;
 }

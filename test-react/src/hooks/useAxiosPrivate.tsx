@@ -1,25 +1,27 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect } from "react";
 import useAuth from "./useAuth";
 import useRefreshToken from "./useRefreshToken";
 import { axiosPrivate } from "../api/axios";
 
 const useAxiosPrivate = () => {
   const refresh = useRefreshToken();
-  const { accessToken, handleSignIn } = useAuth();
+  const { accessToken, handleSignOut } = useAuth();
 
   useEffect(() => {
-    const fetchMe = async () => {
+    console.log("GORNJI USE EFFECT");
+    async function fetchMe() {
       try {
-        const response = refresh();
-        handleSignIn(await response);
+        await refresh();
       } catch {
-        handleSignIn("");
+        handleSignOut();
       }
-    };
+    }
     fetchMe();
-  });
+  }, []);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    console.log("DONJI USE EFFECT");
+
     const requestIntercept = axiosPrivate.interceptors.request.use(
       (config) => {
         if (!config.headers["Authorization"]) {

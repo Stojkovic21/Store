@@ -6,7 +6,8 @@ import SignUp from "./Views/Signup/SignUp";
 import Additem from "./Views/AddItem/AddItem";
 import AddCategoty from "./Views/AddCategory/AddCategory";
 import AddSupplier from "./Views/AddSupplier/AddSupplier";
-import { AuthContext } from "./context/AuthContrext";
+import { AuthProvider } from "./context/AuthContrext";
+import { ShoppingCardProvider } from "./context/ShoppingCartContext";
 
 const router = createBrowserRouter([
   //razlika izmedju link i a je sto a refresuje ceo html i js a link samo prosledi na tu stranicu
@@ -50,9 +51,11 @@ const router = createBrowserRouter([
 function App() {
   return (
     <>
-      <AuthContext>
-        <RouterProvider router={router} />
-      </AuthContext>
+      <AuthProvider>
+        <ShoppingCardProvider>
+          <RouterProvider router={router} />
+        </ShoppingCardProvider>
+      </AuthProvider>
     </>
   );
 }

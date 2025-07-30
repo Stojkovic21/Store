@@ -6,7 +6,8 @@ import LoginDTO from "../../DTOs/LoginDTO";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import useRefreshToken from "../../hooks/useRefreshToken";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
+import axios from "../../api/axios";
+import { useEffect } from "react";
 
 function LoginPage() {
   const {
@@ -17,16 +18,23 @@ function LoginPage() {
   const { isAuthenticated, handleSignIn } = useAuth();
   const refresh = useRefreshToken();
   const navigate = useNavigate();
-  const axiosPrivate = useAxiosPrivate();
+  //const axiosPrivate = useAxiosPrivate();
+  useEffect(() => {
+    refresh();
+    isAuthenticated ? navigate("/") : null;
+  }, []);
   const onSubmit: SubmitHandler<LoginDTO> = async (data) => {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    const response = axiosPrivate
+    axios
       .post("/customer/login", data, {
         withCredentials: true,
       })
       .then((response) => {
-        console.log(response.data);
-        handleSignIn(response.data.accessToken);
+        handleSignIn(
+          response.data.accessToken,
+          response.data.userId,
+          response.data.role
+        );
+        navigate("/");
         return response.status;
       })
       .catch((error) => {
@@ -34,12 +42,11 @@ function LoginPage() {
           console.log("sifra ili email nisu dobri");
         }
       });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   };
-
   return (
     <>
       <Header />
-
       <div className="card-container">
         <div className="card">
           <h2>Login</h2>
@@ -77,20 +84,22 @@ function LoginPage() {
               )}
             </div>
             <button type="submit" disabled={isSubmitting} className="btn w-100">
-              {isSubmitting && isAuthenticated ? "Loading..." : "Submit"}
+              {isSubmitting ? "Loading..." : "Submit"}
             </button>
           </form>
-
-          <button
-            onClick={async () => {
-              const getMe = await axiosPrivate.get("/customer/get/all", {
-                withCredentials: true,
-              });
-              console.log(getMe.data);
-            }}
-          >
-            refresh
-          </button>
+          {
+            // <ProtectedRoute allowRoles={["Admin"]}>
+            //   <button
+            //     onClick={async () => {
+            //       await axiosPrivate.get("/customer/get/all", {
+            //         withCredentials: true,
+            //       });
+            //     }}
+            //   >
+            //     refresh
+            //   </button>
+            // </ProtectedRoute>
+          }
         </div>
       </div>
     </>

@@ -2,25 +2,23 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import Header from "../Header/Header";
 import "../style/Card.css";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import SupplierDTO from "../../DTOs/SuppliersDTO";
+import { axiosPrivate } from "../../api/axios";
 
 export default function AddSupplier() {
   const [getAllSuppliers, setAllSuppliers] = useState<SupplierDTO[]>([]);
   useEffect(() => {
     const FetchItem = async () => {
       try {
-        const allSuppliers = await axios.get(
-          "http://localhost:5057/supplier/get/all"
-        );
+        const allSuppliers = await axiosPrivate.get("/supplier/get/all");
         setAllSuppliers(allSuppliers.data.suppliers);
       } catch (error) {}
     };
     FetchItem();
   }, []);
   const onSubmit: SubmitHandler<SupplierDTO> = async (data) => {
-    data.id=getAllSuppliers.length;
-    await axios.post("http://localhost:5057/supplier/add",data).catch();
+    data.id = getAllSuppliers.length;
+    await axiosPrivate.post("/supplier/add", data).catch();
     window.location.reload();
   };
   const {

@@ -3,15 +3,14 @@ import "../style/Card.css";
 import { useEffect, useState } from "react";
 import customerDto from "../../DTOs/CustomerDto";
 import Header from "../Header/Header";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
+import axios from "../../api/axios";
 
 function SignUp() {
   const [customers, setCustomers] = useState<customerDto[]>([]);
-  const axiosPrivate = useAxiosPrivate();
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const result = await axiosPrivate.get("/customer/all");
+        const result = await axios.get("/customer/get/all");
         setCustomers(result.data.customer);
       } catch (error) {}
     };
@@ -27,7 +26,7 @@ function SignUp() {
   const onSubmit = async (data: customerDto) => {
     data.id = customers.length;
     data.role = "User";
-    await axiosPrivate.post("/customer/signup", data);
+    await axios.post("/customer/signup", data);
     await new Promise((responce) => setTimeout(responce, 1000));
     console.log("Form Data Submitted:", data);
   };
