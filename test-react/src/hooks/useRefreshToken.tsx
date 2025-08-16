@@ -2,7 +2,7 @@ import axios from "../api/axios";
 import useAuth from "./useAuth";
 
 const useRefreshToken = () => {
-  const { accessToken, handleSignIn } = useAuth();
+  const { handleSignIn } = useAuth();
 
   const refresh = async () => {
     const response = await axios.get("customer/refresh-token", {

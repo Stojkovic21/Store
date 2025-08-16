@@ -56,6 +56,10 @@
               "target": "Package",
               "version": "[9.0.0, )"
             },
+            "NRedisStack": {
+              "target": "Package",
+              "version": "[1.0.0, )"
+            },
             "Neo4j.Driver": {
               "target": "Package",
               "version": "[5.27.0, )"

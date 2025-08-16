@@ -8,7 +8,6 @@ const useAxiosPrivate = () => {
   const { accessToken, handleSignOut } = useAuth();
 
   useEffect(() => {
-    console.log("GORNJI USE EFFECT");
     async function fetchMe() {
       try {
         await refresh();
@@ -20,8 +19,6 @@ const useAxiosPrivate = () => {
   }, []);
 
   useEffect(() => {
-    console.log("DONJI USE EFFECT");
-
     const requestIntercept = axiosPrivate.interceptors.request.use(
       (config) => {
         if (!config.headers["Authorization"]) {

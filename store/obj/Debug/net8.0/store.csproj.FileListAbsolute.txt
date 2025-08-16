@@ -367,3 +367,7 @@ F:\BazePodataka\NapredneBazePodataka\Store\store\obj\Debug\net8.0\refint\store.d
 F:\BazePodataka\NapredneBazePodataka\Store\store\obj\Debug\net8.0\store.pdb
 F:\BazePodataka\NapredneBazePodataka\Store\store\obj\Debug\net8.0\store.genruntimeconfig.cache
 F:\BazePodataka\NapredneBazePodataka\Store\store\obj\Debug\net8.0\ref\store.dll
+F:\BazePodataka\NapredneBazePodataka\Store\store\bin\Debug\net8.0\NetTopologySuite.dll
+F:\BazePodataka\NapredneBazePodataka\Store\store\bin\Debug\net8.0\NRedisStack.dll
+F:\BazePodataka\NapredneBazePodataka\Store\store\bin\Debug\net8.0\Pipelines.Sockets.Unofficial.dll
+F:\BazePodataka\NapredneBazePodataka\Store\store\bin\Debug\net8.0\StackExchange.Redis.dll

@@ -12,6 +12,7 @@
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.15",
           "Microsoft.AspNetCore.OpenApi": "8.0.0",
           "Microsoft.EntityFrameworkCore.SqlServer": "9.0.0",
+          "NRedisStack": "1.0.0",
           "Neo4j.Driver": "5.27.0",
           "Swashbuckle.AspNetCore": "6.4.0",
           "System.IdentityModel.Tokens.Jwt": "8.8.0"
@@ -474,6 +475,52 @@
           "lib/net8.0/Neo4j.Driver.dll": {
             "assemblyVersion": "5.27.38.0",
             "fileVersion": "5.27.0.0"
+          }
+        }
+      },
+      "NetTopologySuite/2.5.0": {
+        "dependencies": {
+          "System.Memory": "4.5.4"
+        },
+        "runtime": {
+          "lib/netstandard2.0/NetTopologySuite.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.0.0.0"
+          }
+        }
+      },
+      "NRedisStack/1.0.0": {
+        "dependencies": {
+          "NetTopologySuite": "2.5.0",
+          "StackExchange.Redis": "2.8.24"
+        },
+        "runtime": {
+          "lib/net8.0/NRedisStack.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Pipelines.Sockets.Unofficial/2.2.8": {
+        "dependencies": {
+          "System.IO.Pipelines": "9.0.0"
+        },
+        "runtime": {
+          "lib/net5.0/Pipelines.Sockets.Unofficial.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "2.2.8.1080"
+          }
+        }
+      },
+      "StackExchange.Redis/2.8.24": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "9.0.0",
+          "Pipelines.Sockets.Unofficial": "2.2.8"
+        },
+        "runtime": {
+          "lib/net8.0/StackExchange.Redis.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.8.24.3255"
           }
         }
       },
@@ -996,6 +1043,34 @@
       "sha512": "sha512-bIjjXvlldC4bDTy7sKif45br+EWC47p/pcXEVwo56SGFDJ0Gob9edi30nQY1Y4yAmEjepa4rIPICq6JjlyDUuQ==",
       "path": "neo4j.driver/5.27.0",
       "hashPath": "neo4j.driver.5.27.0.nupkg.sha512"
+    },
+    "NetTopologySuite/2.5.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-5/+2O2ADomEdUn09mlSigACdqvAf0m/pVPGtIPEPQWnyrVykYY0NlfXLIdkMgi41kvH9kNrPqYaFBTZtHYH7Xw==",
+      "path": "nettopologysuite/2.5.0",
+      "hashPath": "nettopologysuite.2.5.0.nupkg.sha512"
+    },
+    "NRedisStack/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vCSwHNibWIgDic2sXAP23s7m7IMu3dlWdfv8LIufFfVGm+yyZ9MXCTFQaGw6zv4hE7k9RhJp64ObvLYx+2sQIQ==",
+      "path": "nredisstack/1.0.0",
+      "hashPath": "nredisstack.1.0.0.nupkg.sha512"
+    },
+    "Pipelines.Sockets.Unofficial/2.2.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zG2FApP5zxSx6OcdJQLbZDk2AVlN2BNQD6MorwIfV6gVj0RRxWPEp2LXAxqDGZqeNV1Zp0BNPcNaey/GXmTdvQ==",
+      "path": "pipelines.sockets.unofficial/2.2.8",
+      "hashPath": "pipelines.sockets.unofficial.2.2.8.nupkg.sha512"
+    },
+    "StackExchange.Redis/2.8.24": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GWllmsFAtLyhm4C47cOCipGxyEi1NQWTFUHXnJ8hiHOsK/bH3T5eLkWPVW+LRL6jDiB3g3izW3YEHgLuPoJSyA==",
+      "path": "stackexchange.redis/2.8.24",
+      "hashPath": "stackexchange.redis.2.8.24.nupkg.sha512"
     },
     "Swashbuckle.AspNetCore/6.4.0": {
       "type": "package",

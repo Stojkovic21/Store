@@ -49,6 +49,6 @@ app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
-app.UseAuthentication();
+//app.UseAuthentication(); zbog ovo nije radio authorization nzm sta i kako samo nije radilo
 app.MapControllers();
 app.Run();

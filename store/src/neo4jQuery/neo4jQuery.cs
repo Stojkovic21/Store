@@ -9,15 +9,22 @@ public class Neo4jQuery
 
     public async Task<INode> ExecuteReadAsync(IAsyncSession session, string quary, Dictionary<string, object> parameters)
     {
-        return await session.ExecuteReadAsync(async tx =>
+        try
         {
-            var response = await tx.RunAsync(quary, parameters);
-            if (await response.FetchAsync())
+            return await session.ExecuteReadAsync(async tx =>
             {
-                return response.Current["n"].As<INode>();
-            }
+                var response = await tx.RunAsync(quary, parameters);
+                if (await response.FetchAsync())
+                {
+                    return response.Current["n"].As<INode>();
+                }
+                return null;
+            });
+        }
+        catch (System.Exception)
+        {
             return null;
-        });
+        }
     }
     public async Task<INode> ExecuteWriteAsync(IAsyncSession session, string quary, Dictionary<string, object> parameters)
     {

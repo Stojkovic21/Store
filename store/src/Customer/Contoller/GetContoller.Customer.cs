@@ -1,4 +1,5 @@
 using System.Net;
+using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Neo4j.Driver;
@@ -23,7 +24,7 @@ public class GetCustomerController : ControllerBase
         this.driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
         neo4JQuary = new();
     }
-    //[Authorize]
+    [Authorize(Roles ="Admin")]
     [HttpGet]
     [Route("get/all")]
     public async Task<ActionResult> GetAllCustomerAsync()
@@ -96,29 +97,38 @@ public class GetCustomerController : ControllerBase
     [Route("me")]
     public async Task<ActionResult> GetMe()
     {
-        string refreshToken = Request.Cookies["refreshToken"].ToString();
-        
+        AuthCustomerController authCustomerController = new (configuration);
         try
         {
+            string refreshToken = Request.Cookies["refreshToken"].ToString();
+            Console.WriteLine(refreshToken);
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
             var query = neo4JQuary.QueryByOneElement("Customer", "refreshToken", "refreshToken",RETURN);
-            var parameters = new Dictionary<string, object>
-            {
-                {"refreshToken",refreshToken}
-            };
+            // var parameters = new Dictionary<string, object>
+            // {
+            //     {"refreshToken",refreshToken}
+            // };
 
-            var result = await neo4JQuary.ExecuteReadAsync(session,query, parameters);
+            // var result = await neo4JQuary.ExecuteReadAsync(session,query, parameters);
 
-            if (result != null)
-            {
-                return Ok(new
-                {
-                    Customer = result.Properties
-                });
-            }
-            else return NotFound(new { message = "Customer is not found" });
+            // if (result != null)
+            // {
+            //     return Ok(new ResponseTokenModel
+            //     {
+            //         AccessToken = authCustomerController.CreateJWT(new JwtModel
+            //         {
+            //             Email = result.Properties["email"]?.ToString(),
+            //             UserId = result.Properties["id"]?.ToString(),
+            //             Role = result.Properties["role"]?.ToString()
+            //         }),
+            //         UserId =int.Parse(result.Properties["id"]?.ToString()),
+            //         Role = result.Properties["role"]?.ToString(),
+            //     });
+            // }
+            //else
+                return NotFound(new { message = "Customer is not found" });
         }
         catch (Exception ex)
         {

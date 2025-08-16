@@ -14,7 +14,7 @@ public class AuthCustomerController : ControllerBase
     private readonly IDriver driver;
     private readonly IConfiguration configuration;
     private readonly Neo4jQuery neo4JQuery;
-    private const string CUSTOMER = "Cutomer";
+    private const string CUSTOMER = "Customer";
     private const string RETURN = "RETURN";
     public AuthCustomerController(IConfiguration configuration)
     {
@@ -39,7 +39,7 @@ public class AuthCustomerController : ControllerBase
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var testQuery = neo4JQuery.QueryByOneElement(CUSTOMER, "email", "email",RETURN);
+            var testQuery = neo4JQuery.QueryByOneElement(CUSTOMER, "email", "email", RETURN);
             var createQuery = @"
                 CREATE (n:Customer {
                     id: $id, 
@@ -74,7 +74,7 @@ public class AuthCustomerController : ControllerBase
                 return Conflict(new { message = "Customer already exists" });
             }
 
-            var newCustomer = await neo4JQuery.ExecuteWriteAsync(session,createQuery,parameters);
+            var newCustomer = await neo4JQuery.ExecuteWriteAsync(session, createQuery, parameters);
 
             if (newCustomer != null)
             {
@@ -115,7 +115,7 @@ public class AuthCustomerController : ControllerBase
         {
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
-            var testQuety = neo4JQuery.QueryByOneElement(CUSTOMER,"email","email",RETURN);
+            var testQuety = neo4JQuery.QueryByOneElement(CUSTOMER, "email", "email", RETURN);
             var parameters = new Dictionary<string, object>
             {
                 {"id",""},
@@ -126,7 +126,7 @@ public class AuthCustomerController : ControllerBase
                 {"brTel",""},
                 {"role",""}
             };
-            var result = await neo4JQuery.ExecuteReadAsync(session,testQuety,parameters);
+            var result = await neo4JQuery.ExecuteReadAsync(session, testQuety, parameters);
             if (result != null && Argon2.Verify(result.Properties["password"]?.ToString(), loginModel.Password))
             {
                 var refreshToken = await GenerateAndSaveRefreshTokenAsync(loginModel);
@@ -205,22 +205,32 @@ public class AuthCustomerController : ControllerBase
     [Route("refresh-token")]
     public async Task<ActionResult> ValidateRefreshTokenAsync()
     {
-        var refreshToken = Request.Cookies["refreshToken"];
+        string refreshToken = Request.Cookies["refreshToken"];
+        Console.WriteLine(refreshToken);
         try
         {
             await driver.VerifyConnectivityAsync();
             await using var session = driver.AsyncSession();
 
-            var query = neo4JQuery.QueryByOneElement(CUSTOMER, "refreshToken", "refreshToken",RETURN);
+            var query = neo4JQuery.QueryByOneElement(CUSTOMER, "refreshToken", "refreshToken", RETURN);
             var parameters = new Dictionary<string, object>
             {
                 {"refreshToken",refreshToken}
             };
-            var result = await neo4JQuery.ExecuteReadAsync(session,query,parameters);
-
-            if (result is not null)//provera da li je token istekao
+            var result = await neo4JQuery.ExecuteReadAsync(session, query, parameters);
+            Console.WriteLine(result.Properties["ime"]);
+            var dateNow = DateTime.UtcNow.ToLocalTime();
+            var dateParse = DateTime.Parse(result.Properties["RTTimeExpire"].ToString()).ToLocalTime();
+            if (result is not null && dateNow < dateParse)
             {
                 var newRefreshToken = await GenerateAndSaveRefreshTokenAsync(new LoginModel(result.Properties["email"].ToString(), result.Properties["password"].ToString()));
+                Response.Cookies.Append("refreshToken", newRefreshToken.ToString(), new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7)
+                });
                 return Ok(new ResponseTokenModel
                 {
                     AccessToken = CreateJWT(new JwtModel
@@ -229,15 +239,28 @@ public class AuthCustomerController : ControllerBase
                         UserId = result.Properties["id"]?.ToString(),
                         Role = result.Properties["role"]?.ToString()
                     }),
-                    UserId =int.Parse(result.Properties["id"]?.ToString()),
+                    UserId = int.Parse(result.Properties["id"]?.ToString()),
                     Role = result.Properties["role"]?.ToString(),
                 });
             }
-            return BadRequest("The refresh token has expire"); //ponovno logovanje
+            return BadRequest("Refresh tokeh has expire!"); //ponovno logovanje
         }
         catch (Exception ex)
         {
             return NotFound(new { message = "False", error = ex });
         }
+    }
+    [HttpGet]
+    [Route("signout")]
+    public void CustomerSignOut()
+    {
+        string newRefreshToken = "";
+        Response.Cookies.Append("refreshToken", newRefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddDays(7)
+        });
     }
 }

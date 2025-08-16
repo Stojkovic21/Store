@@ -3,7 +3,7 @@ import "./Header.css";
 import "../style/Visibility.css";
 import useAuth from "../../hooks/useAuth";
 import axios from "../../api/axios";
-import Card from "./Card";
+import Card from "./CartIcon";
 export default function main() {
   const { isAuthenticated, handleSignOut } = useAuth();
   return (
